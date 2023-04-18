@@ -4,6 +4,12 @@ Antes de ponerse con todo esto es necesario crear un par de claves SSH y asociar
 Es el esquema basico de claves publica-privada no nos volvamos locos. La privada en tu ordenador, la publica en el server.
 Toda la info viene en: https://docs.gitlab.com/ee/user/ssh.html
 
+Enlaces directos:
+
+Trelo => https://trello.com/home
+Google Drive => https://drive.google.com/drive/u/2/my-drive
+Google Colabs => https://colab.research.google.com/?hl=es
+
 ----------------------------------------------------------------------------------------------------------------------------------------------------
 1. INICIALIZACIÓN: clone.
 
