@@ -7,7 +7,9 @@ Toda la info viene en: https://docs.gitlab.com/ee/user/ssh.html
 Enlaces directos:
 
 Trelo => https://trello.com/home
+
 Google Drive => https://drive.google.com/drive/u/2/my-drive
+
 Google Colabs => https://colab.research.google.com/?hl=es
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------
