@@ -48,18 +48,9 @@ if __name__ == '__main__':
         if len(track_bbs_ids) > 0:
             for j in range(len(track_bbs_ids.tolist())):
                 coords = track_bbs_ids.tolist()[j]
-                # x1, y1, x2, y2 = int(coords[0]), int(coords[1]), int(coords[2]), int(coords[3])
-                name_idx = int(coords[4])
-                # name = f"ID: {name_idx}"
-                # color = (0, 255, 0)  # Color verde
-                # cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                # cv2.putText(frame, name, (x1, y1 - 18), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
-
+                
                 # Agregar el ID actualizado a json_results
-                json_results[0][j]['tracker_id'] = name_idx
-                print("->",name_idx)
-
-        # print(json_results,"\n")
+                json_results[0][j]['tracker_id'] = int(coords[4])
         
         imagen = dibujar_caja(frame, json_results)
 

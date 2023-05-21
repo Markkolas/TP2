@@ -1,5 +1,5 @@
 import argparse
-from API import *
+from Funciones import *
 
 def parse_opt(known=False):
     # Crea un objeto ArgumentParser

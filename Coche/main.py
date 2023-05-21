@@ -13,7 +13,7 @@ import torch
 import ultralytics
 import threading
 
-from API import *
+from Funciones import *
 from Argumentos import *
 
 server_address = ('10.0.128.174',20001)
