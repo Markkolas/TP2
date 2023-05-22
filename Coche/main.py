@@ -222,8 +222,8 @@ if __name__ == "__main__":
                         do.set()
 
                     conteo = 0
-                else:
-                    conteo += 1
+            else:
+                conteo += 1
 
             lock.acquire()
             imagen = dibujar_caja(img, datos)
