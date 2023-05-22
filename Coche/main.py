@@ -189,7 +189,7 @@ if __name__ == "__main__":
                             thread = threading.Thread(target=send_request_thread, args=(model_name, traqueo, image_bytes,))
                             thread.start()
 
-                    elif not do.is_set:
+                    elif not do.is_set():
                         imagen_procesar = img
                         do.set()
 
@@ -234,8 +234,7 @@ if __name__ == "__main__":
                         except:
                             thread = threading.Thread(target=send_request_thread, args=(model_name, traqueo, image_bytes,))
                             thread.start()
-                    else:
-                        # if not do.is_set:
+                    elif not do.is_set():
                         imagen_procesar = img
                         do.set()
 
