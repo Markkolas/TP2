@@ -16,6 +16,8 @@ import threading
 from Funciones import *
 from Argumentos import *
 
+from sort import Sort
+
 ###VARIABLES GLOBALES###
 server_address = ('10.0.128.174',20001)
 
@@ -27,6 +29,7 @@ datos = None
 do = threading.Event() #Do processing
 lock = threading.Lock()
 imagen_procesar = None
+traqueo = None
 #######################
 
 ###CONTROL DE COCHE###
@@ -89,15 +92,30 @@ def send_request_thread(modelo, traqueo, image_bytes):
 
 #LOCAL
 def procesado_imagen():
-    modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'custom', path='./modelos/smallFinal.pt', force_reload=True)
+    # modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'custom', path='./modelos/smallFinal.pt', force_reload=True)
+    modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
     global imagen_procesar
     global datos
+
+    # Crear la instancia de SORT
+    mt_tracker = Sort()
 
     while True:
         if do.is_set():
             img = imagen_procesar
             results = modelo_clasificador(img)
             local_data = results_to_json(results, modelo_clasificador)
+            if traqueo:
+                detections = results.pred[0].numpy()
+                # Actualizar SORT
+                track_bbs_ids = mt_tracker.update(detections)
+                
+                if len(track_bbs_ids) > 0:
+                    for j in range(len(track_bbs_ids.tolist())):
+                        coords = track_bbs_ids.tolist()[j]
+                        
+                        # Agregar el ID actualizado a json_results
+                        local_data[0][j]['tracker_id'] = int(coords[4])
 
             lock.acquire()
             datos = local_data
@@ -201,7 +219,7 @@ if __name__ == "__main__":
         while cap.isOpened(): # Si nuestra webcam esta activa
             ret, frame = cap.read() # En frame se encuentra la imagen
 
-            frame = cv2.resize(frame, None, None, fx=1.5, fy=1.5)
+            img = cv2.resize(frame, None, None, fx=1.5, fy=1.5)
 
             if conteo == muestreo:
                     if args.cloud:
@@ -216,8 +234,8 @@ if __name__ == "__main__":
                         except:
                             thread = threading.Thread(target=send_request_thread, args=(model_name, traqueo, image_bytes,))
                             thread.start()
-
-                    elif not do.is_set:
+                    else:
+                        # if not do.is_set:
                         imagen_procesar = img
                         do.set()
 
