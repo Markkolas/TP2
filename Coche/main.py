@@ -25,6 +25,7 @@ control_acelerador=0
 control_giro=0
 
 datos = None
+ptime = 0
 
 do = threading.Event() #Do processing
 lock = threading.Lock()
@@ -84,24 +85,30 @@ def send_control(control_giro,control_acelerador,address):
 #REMOTO
 def send_request_thread(modelo, traqueo, image_bytes):
     global datos
+    global ptime
+    tic = time.perf_counter()
     local_data = send_request(file_list=[np.frombuffer(image_bytes, dtype=np.uint8)], model_name = modelo, tracking = traqueo)
+    toc = time.perf_counter()
 
     lock.acquire()
     datos = local_data
+    ptime =  toc-tic
     lock.release()
 
 #LOCAL
-def procesado_imagen():
-    # modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'custom', path='./modelos/smallFinal.pt', force_reload=True)
-    modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+def procesado_imagen(modelo_clasificador):
+    #modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
     global imagen_procesar
     global datos
+    global ptime
 
     # Crear la instancia de SORT
     mt_tracker = Sort()
 
     while True:
         if do.is_set():
+            #print("Im HERE")
+            tic = time.perf_counter()
             img = imagen_procesar
             results = modelo_clasificador(img)
             local_data = results_to_json(results, modelo_clasificador)
@@ -116,20 +123,21 @@ def procesado_imagen():
                         
                         # Agregar el ID actualizado a json_results
                         local_data[0][j]['tracker_id'] = int(coords[4])
+            toc = time.perf_counter()
 
             lock.acquire()
             datos = local_data
+            ptime = toc-tic
             lock.release()
             do.clear()
-        else:
-            time.sleep(1)
+        #else:
+        #    time.sleep(1)
 #######################
 
 ###MAIN###
 if __name__ == "__main__":
     args = parse_opt()
-
-    muestreo = args.muestreo
+    muestreo = int(args.muestreo)
     conteo = muestreo
     received_payload=b''
 
@@ -151,7 +159,8 @@ if __name__ == "__main__":
 
     if not args.cloud:
         do.clear()
-        thread = threading.Thread(target=procesado_imagen, args=())
+        modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'custom', path='./modelos/smallFinal.pt', force_reload=True)
+        thread = threading.Thread(target=procesado_imagen, args=(modelo_clasificador,))
         thread.start()
 
     if not args.webcam:
@@ -198,10 +207,13 @@ if __name__ == "__main__":
                     conteo += 1
 
                 lock.acquire()
-                imagen = dibujar_caja(img, datos)
+                imagen = dibujar_caja(img.copy(), datos)
+                timer = ptime
                 lock.release()
 
                 imagen = cv2.resize(imagen, None, None, fx=1.5, fy=1.5)
+                cv2.putText(imagen, "T. procesamiento:"+f'{timer*1000:.2f}'+"ms", (20,650), cv2.FONT_HERSHEY_SIMPLEX,
+                    1, (0,0,255), 1, cv2.LINE_AA)
                 cv2.imshow("Coche ARTEMIS", imagen)
                 cv2.waitKey(1)
                 send_control(control_giro,control_acelerador,address)
@@ -234,6 +246,7 @@ if __name__ == "__main__":
                         except:
                             thread = threading.Thread(target=send_request_thread, args=(model_name, traqueo, image_bytes,))
                             thread.start()
+                            
                     elif not do.is_set():
                         imagen_procesar = img
                         do.set()
