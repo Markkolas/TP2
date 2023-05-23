@@ -26,6 +26,7 @@ control_giro=0
 
 datos = None
 ptime = 0
+fps_count = 0
 
 do = threading.Event() #Do processing
 lock = threading.Lock()
@@ -86,21 +87,24 @@ def send_control(control_giro,control_acelerador,address):
 def send_request_thread(modelo, traqueo, image_bytes):
     global datos
     global ptime
+    global fps_count
+    
     tic = time.perf_counter()
     local_data = send_request(file_list=[np.frombuffer(image_bytes, dtype=np.uint8)], model_name = modelo, tracking = traqueo)
     toc = time.perf_counter()
 
     lock.acquire()
     datos = local_data
+    fps_count += 1
     ptime =  toc-tic
     lock.release()
 
 #LOCAL
 def procesado_imagen(modelo_clasificador):
-    #modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
     global imagen_procesar
     global datos
     global ptime
+    global fps_count
 
     # Crear la instancia de SORT
     mt_tracker = Sort()
@@ -123,11 +127,14 @@ def procesado_imagen(modelo_clasificador):
                         
                         # Agregar el ID actualizado a json_results
                         local_data[0][j]['tracker_id'] = int(coords[4])
+                        
             toc = time.perf_counter()
 
             lock.acquire()
             datos = local_data
+            fps_count += 1
             ptime = toc-tic
+            
             lock.release()
             do.clear()
         #else:
@@ -139,6 +146,7 @@ if __name__ == "__main__":
     args = parse_opt()
     muestreo = int(args.muestreo)
     conteo = muestreo
+    FPS = 0
     received_payload=b''
 
     # Si se proporciona el argumento -help, imprime la ayuda y finaliza
@@ -159,7 +167,8 @@ if __name__ == "__main__":
 
     if not args.cloud:
         do.clear()
-        modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'custom', path='./modelos/smallFinal.pt', force_reload=True)
+        # modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'custom', path='./modelos/smallFinal.pt', force_reload=True)
+        modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
         thread = threading.Thread(target=procesado_imagen, args=(modelo_clasificador,))
         thread.start()
 
@@ -170,8 +179,8 @@ if __name__ == "__main__":
 
         sock.bind(server_address)
 
-        #try:
-            # Receive the data in small chunks and retransmit it
+        TIC = time.perf_counter()
+
         while True:
             #print("Esperando dato")
             data, address = sock.recvfrom(99999)
@@ -209,11 +218,16 @@ if __name__ == "__main__":
                 lock.acquire()
                 imagen = dibujar_caja(img.copy(), datos)
                 timer = ptime
+                TOC = time.perf_counter()
+                if TOC - TIC > 10:
+                    FPS = fps_count/(TOC - TIC)
+                    fps_count = 0
+                    TIC = time.perf_counter()
                 lock.release()
 
                 imagen = cv2.resize(imagen, None, None, fx=1.5, fy=1.5)
-                cv2.putText(imagen, "T. procesamiento:"+f'{timer*1000:.2f}'+"ms", (20,650), cv2.FONT_HERSHEY_SIMPLEX,
-                    1, (0,0,255), 1, cv2.LINE_AA)
+                cv2.putText(imagen, "T. proc: "+f'{timer*1000:.2f}'+"ms", (20,650), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
+                cv2.putText(imagen, "FPS: "+f'{FPS:.2f}', (20,690), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
                 cv2.imshow("Coche ARTEMIS", imagen)
                 cv2.waitKey(1)
                 send_control(control_giro,control_acelerador,address)
@@ -224,14 +238,16 @@ if __name__ == "__main__":
                 pass
 
     else:
+        TIC = time.perf_counter()
+        
         # Crear la ventana donde se mostrará el video
         cv2.namedWindow("Video", cv2.WINDOW_NORMAL)
 
         cap = cv2.VideoCapture(0)
         while cap.isOpened(): # Si nuestra webcam esta activa
-            ret, frame = cap.read() # En frame se encuentra la imagen
+            ret, img = cap.read() # En frame se encuentra la imagen
 
-            img = cv2.resize(frame, None, None, fx=1.5, fy=1.5)
+            # img = cv2.resize(frame, None, None, fx=1.5, fy=1.5)
 
             if conteo == muestreo:
                     if args.cloud:
@@ -256,11 +272,20 @@ if __name__ == "__main__":
                 conteo += 1
 
             lock.acquire()
-            imagen = dibujar_caja(img, datos)
+            imagen = dibujar_caja(img.copy(), datos)
+            timer = ptime
+            TOC = time.perf_counter()
+            if TOC - TIC > 10:
+                FPS = fps_count/(TOC - TIC)
+                fps_count = 0
+                TIC = time.perf_counter()
             lock.release()
-            cv2.imshow("Video", imagen)
 
-            # Esperar un poco antes de mostrar la siguiente imagen
+            imagen = cv2.resize(imagen, None, None, fx=1.5, fy=1.5)
+            cv2.putText(imagen, "T. proc: "+f'{timer*1000:.2f}'+"ms", (20,650), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
+            cv2.putText(imagen, "FPS: "+f'{FPS:.2f}', (20,690), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
+                
+            cv2.imshow("Coche ARTEMIS", imagen)
             cv2.waitKey(1)
 
             if cv2.waitKey(1) & 0xFF == ord('q'): # Para parar se le da a la 'q'

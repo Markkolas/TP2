@@ -46,7 +46,7 @@ def box_color():
     
     return colors
 
-def plot_one_box(x, im, color=(128, 128, 128), label=None, confidence=None, tracker_id=None, line_thickness=3):
+def plot_one_box(x, im, color=(128, 128, 128), label=None, confidence=None, tracker_id=None, line_thickness=2):
     # Función cogida del repositorio del repositorio de Ultralytics
     # Plots one bounding box on image 'im' using OpenCV
     assert im.data.contiguous, 'Image not contiguous. Apply np.ascontiguousarray(im) to plot_on_box() input image.'
