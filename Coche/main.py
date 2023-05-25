@@ -50,12 +50,6 @@ def on_press(key):
         control_giro=1
     if key==keyboard.KeyCode.from_char('d'):
         control_giro=-1
-    if key==keyboard.KeyCode.from_char('+'):
-        numFrames += 1
-        frame = 0
-    if key==keyboard.KeyCode.from_char('-'):
-        numFrames -= 1
-        frame = 0
 
 def on_release(key):
     global control_acelerador
@@ -154,6 +148,12 @@ if __name__ == "__main__":
         print_help()
         exit()
 
+    if args.demo:
+        args.modelName = 'smallFinal.pt'
+        args.cloud = True
+        args.tracking = True
+        
+
     if args.modelName:
         model_name = args.modelName
     else:
@@ -167,8 +167,8 @@ if __name__ == "__main__":
 
     if not args.cloud:
         do.clear()
-        # modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'custom', path='./modelos/smallFinal.pt', force_reload=True)
-        modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+        modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'custom', path='./modelos/smallFinal.pt', force_reload=True)
+        #modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
         thread = threading.Thread(target=procesado_imagen, args=(modelo_clasificador,))
         thread.start()
 
@@ -206,7 +206,28 @@ if __name__ == "__main__":
                         except:
                             thread = threading.Thread(target=send_request_thread, args=(model_name, traqueo, image_bytes,))
                             thread.start()
-
+                        
+                        if args.demo:
+                            control_acelerador=0.3
+                            send_control(control_giro,control_acelerador,address)
+                            
+                            if datos:
+                                #print(datos)
+                                for dato in datos[0]:
+                                    if dato['class_name'] =='STOP':
+                                        aux = dato.get('bbox')[2] * dato.get('bbox')[3]
+                                        #print("\nArea caja",aux)
+                                        #if dato.get('bbox')[0] > 420 : #la x muestra que la señal está a la dcha
+                                        if(aux >= 550*125):
+                                            print("\nArea caja",aux)
+                                            #Si el área es mayor que nuestro umbral: 550*125
+                                            control_acelerador=0
+                                            send_control(control_giro,control_acelerador,address)
+                                            time.sleep(2)
+                                            control_acelerador=0.3
+                                            send_control(control_giro,control_acelerador,address)
+                                            time.sleep(3)
+                                            
                     elif not do.is_set():
                         imagen_procesar = img
                         do.set()
@@ -219,7 +240,7 @@ if __name__ == "__main__":
                 imagen = dibujar_caja(img.copy(), datos)
                 timer = ptime
                 TOC = time.perf_counter()
-                if TOC - TIC > 10:
+                if TOC - TIC > 2:
                     FPS = fps_count/(TOC - TIC)
                     fps_count = 0
                     TIC = time.perf_counter()

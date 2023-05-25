@@ -11,7 +11,7 @@ def parse_opt(known=False):
     parser.add_argument('-muestreo', type=int, default=5, help='Cada cuantos frames se pasan por el modelo')
     parser.add_argument('-cloud', action='store_true', help='Utiliza la opción en la nube')
     parser.add_argument('-tracking', action='store_true', help='Activa el seguimiento')
-    parser.add_argument('-autonomo', action='store_true', help='Modo autónomo')
+    parser.add_argument('-demo', action='store_true', help='Demo día presentación')
     parser.add_argument('-webcam', action='store_true', help='Utiliza la webcam en vez de usar el coche')
 
     # Parsea los argumentos de la línea de comandos
@@ -29,7 +29,7 @@ def print_help():
     print("\t-muestreo: Cada cuantos frames se pasan por el modelo")
     print("\t-cloud: Utiliza la opción en la nube")
     print("\t-tracking: Activa el seguimiento")
-    print("\t-autonomo: Modo autónomo")
+    print("\t-demo: Demo día presentación")
     print("\t-webcam: Utiliza la webcam en vez de usar el coche")
     
     print("\nLos modelos disponibles en la nube son:")
