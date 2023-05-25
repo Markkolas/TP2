@@ -32,6 +32,7 @@ def print_help():
     print("\t-autonomo: Modo autónomo")
     print("\t-webcam: Utiliza la webcam en vez de usar el coche")
     
+    print("El tiempo medio que ha tardado en procesar cada imagen ha sido de: ", t_proc(), " s")
     print("\nLos modelos disponibles en la nube son:")
     for modelo in modelos:
         print("\t",modelo)

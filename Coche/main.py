@@ -241,7 +241,7 @@ if __name__ == "__main__":
         TIC = time.perf_counter()
         
         # Crear la ventana donde se mostrará el video
-        cv2.namedWindow("Video", cv2.WINDOW_NORMAL)
+        cv2.namedWindow("Coche ARTEMIS", cv2.WINDOW_NORMAL)
 
         cap = cv2.VideoCapture(0)
         while cap.isOpened(): # Si nuestra webcam esta activa
