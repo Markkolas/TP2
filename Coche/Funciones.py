@@ -78,6 +78,18 @@ def send_help():
         return data
     else:
         print("Error al enviar la solicitud:", res.status_code)
+        
+def t_proc():
+    # Enviamos la solicitud GET al punto final /custom_models
+    res = r.get("http://143.47.38.177/t_proc")
+    
+    if res.ok and res.status_code == 200:
+       # Obtenemos los datos JSON de la respuesta
+        data = res.json()
+        media = data["media"]
+        return media
+    else:
+        print("Error al enviar la solicitud:", res.status_code)
 
 def send_request(file_list = [], 
                     model_name = 'yolov5s',
