@@ -142,6 +142,7 @@ if __name__ == "__main__":
     conteo = muestreo
     FPS = 0
     received_payload=b''
+    id_stop = 0
 
     # Si se proporciona el argumento -help, imprime la ayuda y finaliza
     if args.help:
@@ -208,25 +209,26 @@ if __name__ == "__main__":
                             thread.start()
                         
                         if args.demo:
-                            control_acelerador=0.3
+                            control_acelerador=0.4
                             send_control(control_giro,control_acelerador,address)
                             
                             if datos:
-                                #print(datos)
+                                print(datos)
                                 for dato in datos[0]:
                                     if dato['class_name'] =='STOP':
-                                        aux = dato.get('bbox')[2] * dato.get('bbox')[3]
-                                        #print("\nArea caja",aux)
-                                        #if dato.get('bbox')[0] > 420 : #la x muestra que la señal está a la dcha
-                                        if(aux >= 550*125):
-                                            print("\nArea caja",aux)
-                                            #Si el área es mayor que nuestro umbral: 550*125
-                                            control_acelerador=0
-                                            send_control(control_giro,control_acelerador,address)
-                                            time.sleep(2)
-                                            control_acelerador=0.3
-                                            send_control(control_giro,control_acelerador,address)
-                                            time.sleep(3)
+                                        if not dato.get('tracker_id') == None:
+                                            if dato.get('tracker_id')!= id_stop:
+                                                id_stop = dato['tracker_id']
+                                                aux = dato.get('bbox')[2] * dato.get('bbox')[3]
+                                                #print("\nArea caja",aux)
+                                                #if dato.get('bbox')[0] > 420 : #la x muestra que la señal está a la dcha
+                                                if(aux >= 40000): #550*125
+                                                    print("\nArea caja",aux)
+                                                    #Si el área es mayor que nuestro umbral: 550*125
+                                                    control_acelerador=0
+                                                    send_control(control_giro,control_acelerador,address)
+                                                    time.sleep(10)
+                                                    control_acelerador=0.6
                                             
                     elif not do.is_set():
                         imagen_procesar = img
