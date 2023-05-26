@@ -24,7 +24,7 @@ server_address = ('10.0.128.174',20001)
 control_acelerador=0
 control_giro=0
 
-datos = None
+datos = [[],""]
 ptime = 0
 fps_count = 0
 
@@ -143,6 +143,14 @@ if __name__ == "__main__":
     FPS = 0
     received_payload=b''
     id_stop = 0
+    id_proh = 0
+    id_oblig = 0
+    id_peligro = 0
+    aceleracion_defecto = 0.46
+    marchaAtras_defecto = -0.35
+    derecha = -1
+    izquierda = 1
+    altura = 350
 
     # Si se proporciona el argumento -help, imprime la ayuda y finaliza
     if args.help:
@@ -150,10 +158,9 @@ if __name__ == "__main__":
         exit()
 
     if args.demo:
-        args.modelName = 'smallFinal.pt'
+        args.modelName = 'Final.onnx'
         args.cloud = True
-        args.tracking = True
-        
+        args.tracking = True        
 
     if args.modelName:
         model_name = args.modelName
@@ -208,27 +215,65 @@ if __name__ == "__main__":
                             thread = threading.Thread(target=send_request_thread, args=(model_name, traqueo, image_bytes,))
                             thread.start()
                         
-                        if args.demo:
-                            control_acelerador=0.4
-                            send_control(control_giro,control_acelerador,address)
-                            
-                            if datos:
-                                print(datos)
+                        if args.demo:   
+                            #print(datos)               
+                            if len(datos[0]):                                
+                                etiqueta = []
                                 for dato in datos[0]:
-                                    if dato['class_name'] =='STOP':
-                                        if not dato.get('tracker_id') == None:
-                                            if dato.get('tracker_id')!= id_stop:
-                                                id_stop = dato['tracker_id']
-                                                aux = dato.get('bbox')[2] * dato.get('bbox')[3]
-                                                #print("\nArea caja",aux)
-                                                #if dato.get('bbox')[0] > 420 : #la x muestra que la señal está a la dcha
-                                                if(aux >= 40000): #550*125
-                                                    print("\nArea caja",aux)
-                                                    #Si el área es mayor que nuestro umbral: 550*125
-                                                    control_acelerador=0
-                                                    send_control(control_giro,control_acelerador,address)
-                                                    time.sleep(10)
-                                                    control_acelerador=0.6
+                                    etiqueta.append(dato['class_name'])
+                                
+                                if 'STOP' in etiqueta:
+                                    control_giro=0
+                                    dato = datos[0][etiqueta.index('STOP')]
+                                    if dato.get('tracker_id') != None and dato.get('tracker_id')> id_stop:
+                                        id_stop = dato['tracker_id']
+                                        if(dato.get('bbox')[2] >= altura):
+                                            print("\nAltura caja STOP",dato.get('bbox')[2])
+                                            control_acelerador=0
+                                            send_control(control_giro,control_acelerador,address)
+                                            time.sleep(4)
+                                            control_acelerador = aceleracion_defecto
+                                            control_giro=0 
+
+                                elif 'Obligacion' in etiqueta:
+                                    dato = datos[0][etiqueta.index('Obligacion')]
+                                    if dato.get('tracker_id') != None and dato.get('tracker_id')> id_oblig:
+                                        id_oblig = dato['tracker_id']
+                                        if(dato.get('bbox')[2] >= altura and dato.get('confidence')>=0.9):
+                                            print("\nAltura caja OBLIG",dato.get('bbox')[2])
+                                            print("\tID OBLIG",id_oblig)
+                                            control_acelerador = aceleracion_defecto
+                                            control_giro=izquierda
+                                
+                                elif 'Prohibicion' in etiqueta:
+                                    control_giro=0
+                                    dato = datos[0][etiqueta.index('Prohibicion')]
+                                    if dato.get('tracker_id') != None and dato.get('tracker_id')> id_proh:
+                                        id_proh = dato['tracker_id']
+                                        if(dato.get('bbox')[2] >= altura and dato.get('confidence')>=0.9):
+                                            print("\nAltura caja PROH",dato.get('bbox')[2])
+                                            print("\tID PROH",id_proh)
+                                            control_acelerador = marchaAtras_defecto
+
+                                elif 'Peligro' in etiqueta:
+                                    control_giro=0
+                                    dato = datos[0][etiqueta.index('Peligro')]
+                                    if dato.get('tracker_id') != None and dato.get('tracker_id')> id_peligro:
+                                        id_peligro = dato['tracker_id']                                        
+                                        if(dato.get('bbox')[2] >= altura and dato.get('confidence')>=0.9):
+                                            print("\nAltura caja PELIGRO",dato.get('bbox')[2])
+                                            print("\tID PELIGRO",id_peligro)
+                                            control_acelerador=-0.6
+                                            send_control(control_giro,control_acelerador,address) 
+                                            time.sleep(1)
+                                            control_acelerador = aceleracion_defecto
+                                            control_giro=0
+
+                            else:
+                                control_acelerador = aceleracion_defecto
+                                control_giro = 0
+                            
+                            send_control(control_giro,control_acelerador,address)    
                                             
                     elif not do.is_set():
                         imagen_procesar = img
@@ -250,9 +295,8 @@ if __name__ == "__main__":
 
                 imagen = cv2.resize(imagen, None, None, fx=1.5, fy=1.5)
                 cv2.putText(imagen, "RTT: "+f'{timer*1000:.2f}'+"ms", (20,650), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
-                if not datos == None:
-                    if len(datos) > 1:
-                        cv2.putText(imagen, "T. proc: "+datos[1]+"ms", (20,690), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
+                if len(datos) > 1:
+                    cv2.putText(imagen, "T. proc: "+datos[1]+"ms", (20,690), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
                 cv2.putText(imagen, "FPS: "+f'{FPS:.2f}', (20,610), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
                 cv2.imshow("Coche ARTEMIS", imagen)
                 cv2.waitKey(1)
@@ -310,9 +354,8 @@ if __name__ == "__main__":
 
             imagen = cv2.resize(imagen, None, None, fx=1.5, fy=1.5)
             cv2.putText(imagen, "RTT: "+f'{timer*1000:.2f}'+"ms", (20,650), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
-            if not datos == None:
-                if len(datos) > 1:
-                    cv2.putText(imagen, "T. proc: "+datos[1]+"ms", (20,690), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
+            if len(datos) > 1:
+                cv2.putText(imagen, "T. proc: "+datos[1]+"ms", (20,690), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
             cv2.putText(imagen, "FPS: "+f'{FPS:.2f}', (20,610), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
             cv2.imshow("Coche ARTEMIS", imagen)
             cv2.waitKey(1)
