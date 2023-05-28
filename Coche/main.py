@@ -293,11 +293,10 @@ if __name__ == "__main__":
                 lock.release()
 
                 imagen = cv2.resize(imagen, None, None, fx=1.5, fy=1.5)
-                cv2.putText(imagen, "RTT: "+f'{timer*1000:.2f}'+"ms", (20,650), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
-                if len(datos) > 1:
-                    cv2.putText(imagen, "T. proc: "+datos[1]+"ms", (20,690), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
-                cv2.putText(imagen, "FPS: "+f'{FPS:.2f}', (20,610), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
-                cv2.imshow("Coche ARTEMIS", imagen)
+                
+                imagen_metricas = add_text_to_image(imagen, timer, datos, FPS)
+                
+                cv2.imshow("Coche ARTEMIS", imagen_metricas)
                 cv2.waitKey(1)
                 
                 send_control(control_giro,control_acelerador,address)
@@ -352,11 +351,10 @@ if __name__ == "__main__":
             lock.release()
 
             imagen = cv2.resize(imagen, None, None, fx=1.5, fy=1.5)
-            cv2.putText(imagen, "RTT: "+f'{timer*1000:.2f}'+"ms", (20,650), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
-            if len(datos) > 1:
-                cv2.putText(imagen, "T. proc: "+datos[1]+"ms", (20,690), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
-            cv2.putText(imagen, "FPS: "+f'{FPS:.2f}', (20,610), cv2.FONT_HERSHEY_SIMPLEX, 1, (127,0,255), 2, cv2.LINE_AA)
-            cv2.imshow("Coche ARTEMIS", imagen)
+            
+            imagen_metricas = add_text_to_image(imagen, timer, datos, FPS)
+                
+            cv2.imshow("Coche ARTEMIS", imagen_metricas)
             cv2.waitKey(1)
 
             if cv2.waitKey(1) & 0xFF == ord('q'): # Para parar se le da a la 'q'

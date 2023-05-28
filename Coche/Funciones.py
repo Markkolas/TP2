@@ -206,3 +206,44 @@ def results_to_json(results, model):
                 ]
             for result in results.xyxy
             ]
+
+def add_text_to_image(image, timer, datos, FPS):
+    # Crear una imagen en blanco con el mismo tamaño que la imagen original
+    overlay = np.zeros_like(image)
+
+    # Definir las propiedades del texto
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 1
+    text_thickness = 1
+    line_type = cv2.LINE_AA
+
+    # Obtener las dimensiones del texto
+    (text_width, text_height), _ = cv2.getTextSize("Texto de ejemplo", font, font_scale, text_thickness)
+
+    # Calcular la posición del rectángulo de fondo y del texto
+    rect_x = image.shape[1] - text_width - 20
+    rect_y = 30
+    rect_width = text_width + 20
+    rect_height = text_height*3 + 10
+    text_x = rect_x + 10
+    text_y = rect_y + text_height + 10
+    
+    # Dibujar el rectángulo de fondo en la capa de superposición
+    cv2.rectangle(overlay, (rect_x, 0), (rect_x + rect_width, rect_y + rect_height), (100, 100, 100), -1)
+    
+    cv2.rectangle(overlay, (rect_x, 0), (rect_x + rect_width, rect_y + rect_height), (50, 50, 50), thickness=3, lineType=cv2.LINE_AA)
+    
+    # Agregar el texto a la capa de superposición
+   
+    if len(datos) > 1:
+        cv2.putText(overlay, "FPS: " + f'{FPS:.2f}', (text_x, text_y - text_height - 10), font, font_scale, (1, 1, 1), text_thickness, line_type)
+        cv2.putText(overlay, "RTT: " + f'{timer*1000:.2f}' + "ms", (text_x, text_y), font, font_scale, (1, 1, 1), text_thickness, line_type)
+        cv2.putText(overlay, "T. proc: " + datos[1] + "ms", (text_x, text_y + text_height + 10), font, font_scale, (1, 1, 1), text_thickness, line_type)
+    else:
+        cv2.putText(overlay, "FPS: " + f'{FPS:.2f}', (text_x, text_y - text_height), font, font_scale, (1, 1, 1), text_thickness, line_type)
+        cv2.putText(overlay, "T. proc: " + f'{timer*1000:.2f}' + "ms", (text_x, text_y + text_height), font, font_scale, (1, 1, 1), text_thickness, line_type)
+    
+    # Fusionar la capa de superposición con la imagen original
+    image_with_text = cv2.add(image, overlay)
+
+    return image_with_text
