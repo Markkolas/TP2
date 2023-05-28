@@ -158,7 +158,6 @@ if __name__ == "__main__":
         exit()
 
     if args.demo:
-        args.modelName = 'Final.onnx'
         args.cloud = True
         args.tracking = True        
 
