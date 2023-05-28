@@ -21,7 +21,8 @@ def parse_opt(known=False):
 
 def print_help():
     modelos = send_help()
-    print("\nDescripción del código:")
+    print("_____________________________________________________________________________________________________")
+    print("Descripción del código:")
     print("\tEste código realiza acciones específicas basadas en los datos recibidos a través de un socket.\n")
     print("Argumentos disponibles:")
     print("\t-help: Muestra esta ayuda")
@@ -31,11 +32,11 @@ def print_help():
     print("\t-tracking: Activa el seguimiento")
     print("\t-demo: Demo día presentación")
     print("\t-webcam: Utiliza la webcam en vez de usar el coche")
-    
-    print("El tiempo medio que ha tardado en procesar cada imagen ha sido de: ", t_proc(), " s")
-    print("\nLos modelos disponibles en la nube son:")
+    print("_____________________________________________________________________________________________________")
+    print("Los modelos disponibles en la nube son:")
     for modelo in modelos:
         print("\t",modelo)
-    print("\nAdemás de los modelos de COCO: yolov5s yolov5m yolov5l yolov5x yolov5n yolov5n6 yolov5s6 yolov5m6 yolov5l6 yolov5x6")
+    print("Además de los modelos de COCO: \n\tyolov5s yolov5m yolov5l yolov5x yolov5n yolov5n6 yolov5s6 yolov5m6 yolov5l6 yolov5x6")
+    print("_____________________________________________________________________________________________________")
     
     model_selection_options = []

@@ -175,8 +175,7 @@ if __name__ == "__main__":
 
     if not args.cloud:
         do.clear()
-        modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'custom', path='./modelos/Final.onnx', force_reload=True)
-        #modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+        modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'custom', path='./modelos/'+model_name, force_reload=True)
         thread = threading.Thread(target=procesado_imagen, args=(modelo_clasificador,))
         thread.start()
 
