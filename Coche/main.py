@@ -151,6 +151,7 @@ if __name__ == "__main__":
     derecha = -1
     izquierda = 1
     altura = 350
+    model_yolov5_options = ['yolov5s','yolov5m','yolov5l','yolov5x','yolov5n','yolov5n6','yolov5s6','yolov5m6','yolov5l6','yolov5x6']
 
     # Si se proporciona el argumento -help, imprime la ayuda y finaliza
     if args.help:
@@ -174,7 +175,10 @@ if __name__ == "__main__":
 
     if not args.cloud:
         do.clear()
-        modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'custom', path='./modelos/'+model_name, force_reload=True)
+        if model_name in model_yolov5_options:
+             modelo_clasificador = torch.hub.load('ultralytics/yolov5', model_name, pretrained=True)
+        else:
+            modelo_clasificador = torch.hub.load('ultralytics/yolov5', 'custom', path='./modelos/'+model_name, force_reload=True)
         thread = threading.Thread(target=procesado_imagen, args=(modelo_clasificador,))
         thread.start()
 
