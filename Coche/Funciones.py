@@ -153,22 +153,24 @@ def add_text_to_image(image, timer, datos, FPS):
     # Definir las propiedades del texto
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = 1
-    text_thickness = 1
+    text_thickness = 2
     line_type = cv2.LINE_AA
 
     # Obtener las dimensiones del texto
     (text_width, text_height), _ = cv2.getTextSize("Texto de ejemplo", font, font_scale, text_thickness)
 
     # Calcular la posición del rectángulo de fondo y del texto
-    rect_x = image.shape[1] - text_width - 20
-    rect_y = 30
+    # rect_x = image.shape[1] - text_width - 20
+    # rect_y = 30
+    rect_x = 0
+    rect_y = image.shape[0] - 20 - text_height*3
     rect_width = text_width + 20
     rect_height = text_height*3 + 10
     text_x = rect_x + 10
     text_y = rect_y + text_height + 10
     
     # Dibujar el rectángulo de fondo en la capa de superposición
-    cv2.rectangle(overlay, (rect_x, 0), (rect_x + rect_width, rect_y + rect_height), (50, 50, 50), thickness=3, lineType=cv2.LINE_AA)
+    # cv2.rectangle(overlay, (rect_x, 0), (rect_x + rect_width, rect_y + rect_height), (50, 50, 50), thickness=3, lineType=cv2.LINE_AA)
     
     # Agregar el texto a la capa de superposición
    
